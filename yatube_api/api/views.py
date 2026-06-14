@@ -1,6 +1,7 @@
 # yatube_api/api/views.py
 from rest_framework import viewsets, filters, mixins, permissions
 from django_filters.rest_framework import DjangoFilterBackend
+from .permissions import IsAuthorOrReadOnly
 
 from posts.models import Post, Comment, Group
 from .serializers import (
@@ -12,7 +13,7 @@ from .serializers import (
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = (IsAuthorOrReadOnly,)
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     filterset_fields = ('group',)
     search_fields = ('text',)
@@ -23,7 +24,7 @@ class PostViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = (IsAuthorOrReadOnly,)
 
     def get_queryset(self):
         return Comment.objects.filter(post_id=self.kwargs.get('post_id'))
