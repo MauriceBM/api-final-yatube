@@ -2,12 +2,18 @@
 from rest_framework import viewsets, filters, mixins, permissions
 from django_filters.rest_framework import DjangoFilterBackend
 from .permissions import IsAuthorOrReadOnly
+from rest_framework.pagination import LimitOffsetPagination
 
 from posts.models import Post, Comment, Group
 from .serializers import (
     PostSerializer, CommentSerializer,
     GroupSerializer, FollowSerializer
 )
+
+
+class PostPagination(LimitOffsetPagination):
+    default_limit = 10
+    max_limit = 100
 
 
 class PostViewSet(viewsets.ModelViewSet):
@@ -17,6 +23,7 @@ class PostViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     filterset_fields = ('group',)
     search_fields = ('text',)
+    pagination_class = PostPagination
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
