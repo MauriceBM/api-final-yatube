@@ -3,6 +3,7 @@ from rest_framework import viewsets, filters, mixins, permissions
 from django_filters.rest_framework import DjangoFilterBackend
 from .permissions import IsAuthorOrReadOnly
 from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.exceptions import PermissionDenied
 
 from posts.models import Post, Comment, Group
 from .serializers import (
@@ -26,6 +27,8 @@ class PostViewSet(viewsets.ModelViewSet):
     pagination_class = PostPagination
 
     def perform_create(self, serializer):
+        if not self.request.user.is_authenticated:
+            raise PermissionDenied("Authentication required to create posts.")
         serializer.save(author=self.request.user)
 
 
@@ -37,6 +40,9 @@ class CommentViewSet(viewsets.ModelViewSet):
         return Comment.objects.filter(post_id=self.kwargs.get('post_id'))
 
     def perform_create(self, serializer):
+        if not self.request.user.is_authenticated:
+            raise PermissionDenied(
+                "Authentication required to create comments.")
         post = Post.objects.get(id=self.kwargs.get('post_id'))
         serializer.save(author=self.request.user, post=post)
 
@@ -65,3 +71,13 @@ class FollowViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+class ConditionalLimitOffsetPagination(LimitOffsetPagination):
+    default_limit = None
+    max_limit = 100
+
+    def paginate_queryset(self, queryset, request, view=None):
+        if 'limit' in request.query_params or 'offset' in request.query_params:
+            return super().paginate_queryset(queryset, request, view)
+        return None
