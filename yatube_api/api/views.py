@@ -28,9 +28,7 @@ class ConditionalLimitOffsetPagination(LimitOffsetPagination):
 
 
 class PostViewSet(viewsets.ModelViewSet):
-    queryset = Post.objects.select_related(
-        'author', 'group'
-    ).all()
+    queryset = Post.objects.select_related('author', 'group')
     serializer_class = PostSerializer
     permission_classes = (IsAuthorOrReadOnly,)
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
@@ -77,7 +75,7 @@ class FollowViewSet(
     search_fields = ('following__username',)
 
     def get_queryset(self):
-        return self.request.user.follower.all()
+        return self.request.user.follower
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
